@@ -65,21 +65,54 @@ document.addEventListener('DOMContentLoaded', () => {
         bolo.style.animation = '';
         bolo.style.left = '';
 
-        gato.src = 'assets/gato.gif';
+        gato.src = 'assets/gato.gif.png?' + new Date().getTime();
         gato.style.animation = '';
         gato.style.bottom = '0px';
-        gato.style.width = '';
+        gato.style.width = '120px';
         gato.style.marginLeft = '';
         gato.classList.remove('jump');
 
         if (moeda) {
             moeda.style.animation = '';
-            moeda.style.display = 'flex';
+            moeda.style.left = '';
+            moeda.style.visibility = 'visible';
             moedaColetada = false;
         }
 
         if (jumpTip) {
             jumpTip.style.opacity = '1';
+        }
+    }
+
+    function checkCoinCollection() {
+        if (!isPlaying || !moeda) return;
+
+        const rectGato = gato.getBoundingClientRect();
+        const rectMoeda = moeda.getBoundingClientRect();
+        const rectBoard = gameBoard.getBoundingClientRect();
+
+        // Quando a moeda passa totalmente pela esquerda, reativa para a próxima volta
+        if (rectMoeda.right <= rectBoard.left) {
+            moedaColetada = false;
+            moeda.style.visibility = 'visible';
+        }
+
+        if (moedaColetada) return;
+
+        // Checa se as caixas do gato e da moeda estão se sobrepondo
+        const colidiu = !(
+            rectGato.right < rectMoeda.left ||
+            rectGato.left > rectMoeda.right ||
+            rectGato.bottom < rectMoeda.top ||
+            rectGato.top > rectMoeda.bottom
+        );
+
+        if (colidiu) {
+            moedaColetada = true;
+            moeda.style.visibility = 'hidden';
+            
+            score += 10;
+            scoreDisplay.textContent = score;
         }
     }
 
@@ -110,30 +143,6 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    // Checa se o personagem cruzou com a moeda para coletá-la
-    function checkCoinCollection() {
-        if (!isPlaying || moedaColetada || !moeda) return;
-
-        const moedaPosition = moeda.offsetLeft;
-        const gatoPosition = +window.getComputedStyle(gato).bottom.replace('px', '');
-
-        // Reseta a permissão de coleta quando a moeda reaparece na direita
-        if (moedaPosition > gameBoard.offsetWidth - 60) {
-            moedaColetada = false;
-            moeda.style.display = 'flex';
-        }
-
-        // Posição de colisão entre o gato e a moeda
-        if (moedaPosition <= 120 && moedaPosition >= 50 && gatoPosition >= 70) {
-            moedaColetada = true;
-            moeda.style.display = 'none'; // Esconde a moeda coletada
-            
-            // Bônus de pontuação ao coletar
-            score += 10;
-            scoreDisplay.textContent = score;
-        }
-    }
-
     function triggerGameOver(boloPosition, gatoPosition) {
         isPlaying = false;
         clearInterval(gameLoop);
@@ -153,7 +162,7 @@ document.addEventListener('DOMContentLoaded', () => {
         gato.style.animation = 'none';
         gato.style.bottom = `${gatoPosition}px`;
         gato.src = 'assets/game-over.png';
-        gato.style.width = '75px';
+        gato.style.width = '120px';
         gato.style.marginLeft = '50px';
 
         finalScoreValue.textContent = score;

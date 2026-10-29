@@ -83,14 +83,13 @@ body {
 }
 
 .gato {
-    width: 80px;
+    width: 120px;
     height: auto;
     position: absolute;
     bottom: 0;
     left: 50px;
     z-index: 2;
 }
-
 
 .nuvens {
     position: absolute;
