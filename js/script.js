@@ -1,8 +1,7 @@
-
-
 document.addEventListener('DOMContentLoaded', () => {
     const bolo = document.querySelector('.bolo');
     const gato = document.querySelector('.gato');
+    const moeda = document.getElementById('moeda');
     const gameBoard = document.getElementById('game-board');
     const hudPlayerName = document.getElementById('hud-player-name');
     const scoreDisplay = document.getElementById('score-display');
@@ -26,6 +25,9 @@ document.addEventListener('DOMContentLoaded', () => {
     let gameLoop = null;
     let scoreLoop = null;
 
+    // Controla se a moeda atual já foi coletada na rodada
+    let moedaColetada = false;
+
     const savedName = localStorage.getItem('gato_jump_player');
     if (savedName && playerInput) {
         playerInput.value = savedName;
@@ -44,6 +46,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         gameBoard.classList.add('running');
 
+        // Incremento contínuo de pontos por tempo
         scoreLoop = setInterval(() => {
             if (isPlaying) {
                 score += 1;
@@ -51,9 +54,12 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         }, 100);
 
-        gameLoop = setInterval(checkCollision, 10);
+        // Loop principal de física (colisão com obstáculo e coleta de moeda)
+        gameLoop = setInterval(() => {
+            checkCollision();
+            checkCoinCollection();
+        }, 10);
     }
-
 
     function resetElements() {
         bolo.style.animation = '';
@@ -65,6 +71,12 @@ document.addEventListener('DOMContentLoaded', () => {
         gato.style.width = '';
         gato.style.marginLeft = '';
         gato.classList.remove('jump');
+
+        if (moeda) {
+            moeda.style.animation = '';
+            moeda.style.display = 'flex';
+            moedaColetada = false;
+        }
 
         if (jumpTip) {
             jumpTip.style.opacity = '1';
@@ -86,14 +98,39 @@ document.addEventListener('DOMContentLoaded', () => {
         }, 500);
     }
 
+    // Checa colisão fatal com o bolo
     function checkCollision() {
         if (!isPlaying) return;
 
         const boloPosition = bolo.offsetLeft;
         const gatoPosition = +window.getComputedStyle(gato).bottom.replace('px', '');
 
-        if (boloPosition <= 120 && boloPosition > 0 && gatoPosition < 80) {
+        if (boloPosition <= 120 && boloPosition > 0 && gatoPosition <= 70) {
             triggerGameOver(boloPosition, gatoPosition);
+        }
+    }
+
+    // Checa se o personagem cruzou com a moeda para coletá-la
+    function checkCoinCollection() {
+        if (!isPlaying || moedaColetada || !moeda) return;
+
+        const moedaPosition = moeda.offsetLeft;
+        const gatoPosition = +window.getComputedStyle(gato).bottom.replace('px', '');
+
+        // Reseta a permissão de coleta quando a moeda reaparece na direita
+        if (moedaPosition > gameBoard.offsetWidth - 60) {
+            moedaColetada = false;
+            moeda.style.display = 'flex';
+        }
+
+        // Posição de colisão entre o gato e a moeda
+        if (moedaPosition <= 120 && moedaPosition >= 50 && gatoPosition >= 70) {
+            moedaColetada = true;
+            moeda.style.display = 'none'; // Esconde a moeda coletada
+            
+            // Bônus de pontuação ao coletar
+            score += 10;
+            scoreDisplay.textContent = score;
         }
     }
 
@@ -102,12 +139,16 @@ document.addEventListener('DOMContentLoaded', () => {
         clearInterval(gameLoop);
         clearInterval(scoreLoop);
 
-        
         gameBoard.classList.remove('running');
 
-        
         bolo.style.animation = 'none';
         bolo.style.left = `${boloPosition}px`;
+
+        if (moeda) {
+            const moedaPos = moeda.offsetLeft;
+            moeda.style.animation = 'none';
+            moeda.style.left = `${moedaPos}px`;
+        }
 
         gato.style.animation = 'none';
         gato.style.bottom = `${gatoPosition}px`;
@@ -123,7 +164,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
         saveScore(currentPlayer, score);
     }
-
 
     function saveScore(playerName, finalScore) {
         fetch('salvar_ranking.php', {
@@ -227,7 +267,6 @@ document.addEventListener('DOMContentLoaded', () => {
         startGame();
     });
 
-
     btnViewRanking.addEventListener('click', () => {
         fetchRanking();
         finalScoreValue.textContent = '---';
@@ -253,6 +292,7 @@ document.addEventListener('DOMContentLoaded', () => {
         playerInput.value = '';
         playerInput.focus();
     });
+
     document.addEventListener('keydown', (e) => {
         if (e.code === 'Space' || e.key === ' ' || e.code === 'ArrowUp') {
             if (isPlaying) {

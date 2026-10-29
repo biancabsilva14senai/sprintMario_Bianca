@@ -45,6 +45,7 @@ try {
             <img src="assets/nuvens.png" class="nuvens" alt="Nuvens">
             <img src="assets/gato.gif" class="gato" alt="Gato">
             <img src="assets/bolo.png" class="bolo" alt="Bolo">
+            <div class="moeda" id="moeda">$</div>
             <span class="jump-tip" id="jump-tip">Pressione ESPAÇO ou clique para pular</span>
         </main>
     </div>
